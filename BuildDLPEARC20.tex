@@ -1,5 +1,5 @@
 %% IMPORTANT NOTICE:
-%% 
+%%
 %% For the copyright see the source file.
 %% This generated file may be distributed as long as the
 %% original source files, as listed above, are part of the
@@ -34,8 +34,10 @@
 %% These commands are for a PROCEEDINGS abstract or paper.
 \acmConference[PEARC '20]{Woodstock '18: ACM Symposium on Neural
   Gaze Detection}{June 03--05, 2020}{Portland, OR}
- 
-\usepackage{subcaption}   
+
+\usepackage{subcaption}
+\usepackage{float}
+
 %% end of the preamble, start of the body of the document source.
 \begin{document}
 
@@ -100,7 +102,7 @@
 \renewcommand{\shortauthors}{Kusz and Peters, et al.}
 
 \newif\ifdraft
-\drafttrue
+%\drafttrue
 \ifdraft
 \newcommand{\note}[1]{ {\textcolor{blue} { ***NOTE: #1 }}}
 \newcommand{\scott}[1]{ {\textcolor{red} { ***Scott: #1 }}}
@@ -117,7 +119,7 @@
 %% The abstract is a short summary of the work to be presented in the
 %% article.
 \begin{abstract}
-Deep learning frameworks have been widely used in image classification and segmentation tasks. In this article we outline how we adapted an image segmentation model, U-Net, to identify object in geospatial images. The model has been trained and tested on a set of orthophotographic data from the state of Indiana. We discuss the use cases for a tool of this nature and some of the challenges and pitfalls in tuning a model for use with geospatial data.
+Deep learning frameworks have been widely used in image classification and segmentation tasks. In this paper we outline the methods used to  adapt an image segmentation model, U-Net, to identify buildings in geospatial images. The model has been trained and tested on a set of orthophotographic data from the state of Indiana. This tool has a wide range of potential uses in research involving geospatial imagery.  We discuss these use cases and some of the challenges and pitfalls in tuning a model for use with geospatial data.
 \end{abstract}
 
 %%
@@ -163,15 +165,21 @@ Deep learning frameworks have been widely used in image classification and segme
 \section{Introduction}
 \scott{We should include the motivation here. I would suggest moving the paragraph below to the Methodology section. Justin if you have text that outlines the potential use cases for this tool it should go here.}
 
-With the growing amounts of geospatial remotely-sensed satellite imagery and aerial orthophotography datasets being made available as open data, the need for creating tools and workflows to analyze new and historic datasets that can identify features and detect or monitor environmental change has also increased.
+The study of geospatial data, or geospatial information science (GIS) is widely used within a broad set of scientific disciplines including climate, agricultural, and environmental sciences and public affairs and public planning. With the growing amounts of geospatial remotely-sensed satellite imagery and aerial orthophotography datasets being made available as open data, the need for creating tools and workflows to analyze new and historic datasets that can identify features and detect or monitor environmental change has also increased. In many cases this is currently a manual and somewhat labor intensive process requiring the expertise of someone familiar with GIS terminology and data formats and able to use specialized GIS software such as ArcGIS or QGIS. While it would be very difficult to remove all need for interaction, performing some common and repetitive tasks via a deep learning framework is achievable to a reasonable degree of accuracy.
 
-Depending upon numerous technical specifications like pixel resolution and image format, often the size of such digital open geospatial orthophotography datasets can be in the terabytes, especially when examining a large geographic extent such as a US State or a multiple county region.  When such large dataset file sizes are coupled with the need for large amounts of processing power, the need for workflows using advanced research computing infrastructure become apparent.
+In addition, Depending upon numerous technical specifications like pixel resolution and image format, often the size of such digital open geospatial orthophotography datasets can be in the terabytes and can encompass tens to hundreds of thousands of files,  especially when examining a large geographic extent such as a US State or a multiple county region. Typically, when such large datasets are worked with by researchers, this is done in a small region at a time fashion. Data can then be downloaded to a workstation and worked on interactively with GIS software. However, this process can be very time consuming, and coupled with the need for large amounts of processing power overall, the advantage for transitioning workflows to advanced research computing infrastructure become apparent.
 
-Feature extraction from historic orthophotography can help identify processes and patterns that might be identified by detecting the presence, or absence, of features from previous or future images.  This ability to identify features and track presence through time has numerous potential use cases.  Any set of real-world features physically large enough to be observed in the input image could be a potential use case.  This paper examines large features such as buildings, which are visible in even course resolution imagery.  However, other open imagery datasets have very fine resolution such as 3-inch pixel resolution.  This means that each pixel in the image represents a sample of a 3-inch by 3-inch square on the ground.    In such datasets, other smaller physical features that are visible in the imagery can be detected, such as street lamp posts or manhole covers.  
+Feature extraction from historic orthophotography can help identify processes and patterns that might be identified by detecting the presence, or absence, of features from previous or future images. This ability to identify features and track presence through time has numerous potential use cases. Any set of real-world features physically large enough to be observed in the input image could be a potential use case. This paper examines large features such as buildings, which are visible in even course resolution imagery. However, other open imagery datasets have very fine resolution down to 3-inch pixel resolution. This means that each pixel in the image represents a sample of a 3-inch by 3-inch square on the ground. In such datasets, other smaller physical features that are visible in the imagery can be detected, such as street lamp posts or manhole covers. While some municipal or county governments employ GIS professionals to provide outlines, or footprints, of buildings, these smaller objects are far too numerous to create footprints via a manual process.
 
-Methods outlined in this paper enable the ability to extract additional value and information out of historic datasets that were previously paid for and are now openly available.  Many Federal, State, and County entities like the United States Department of Agriculture (USDA) National Agricultural Imagery Program (NAIP) acquire aerial photography and make the data openly available.  Combining multiple datasets from the multiple data providers enables a temporal workflow of using time-based datasets to analyse change to a specific geographic environment over time. Table~\ref{tab:avail}  highlights the availability of almost annual datasets for Hamilton County, Indiana over the past quarter century.         
+The methods outlined in this paper enable the ability to extract additional value and information out of historic datasets that have been  previously collected for and are now openly available. Many federal, state, and county entities like the United States Department of Agriculture (USDA) National Agricultural Imagery Program (NAIP) acquire aerial photography and make these data openly available. Combining multiple datasets from the multiple data providers enables a workflow of analyzing datasets from multiple epochs to detect the characteristics and mangnitude of change to a specific geographic environment over time. Table~\ref{tab:avail} highlights the availability of almost annual datasets for Hamilton County, Indiana over the past quarter century.
 
-\begin{table}
+\begin{figure*}[t]
+  \includegraphics[width=0.7\linewidth]{Images/UNetModel.png}
+  \caption{Structure of the UNet model that achieved the best results.}
+  \label{fig:model}
+\end{figure*}
+
+\begin{table}[b]
     \caption{Caption goes here.}
     \label{tab:avail}
     \begin{tabular}{c|c|c}
@@ -204,37 +212,28 @@ Methods outlined in this paper enable the ability to extract additional value an
     \end{tabular}
 \end{table}
 
-
-
-
 \section{Methodology}
 \scott{Start with description of initial steps, I've pulled down the paragraph describing the Microsoft efforts and we should jump off from there.}
 
-In June of 2018 Microsoft released a geospatial dataset of all building footprints in the United States that were extracted from the Microsoft Bing Maps Aerial and Satellite Imagery\cite{Microsoft2019}. According to their documentation, Microsoft then used ResNet34 and RefineNet for per-pixel building identification with their own method of polygonizing the building footprints. Although these inital results were released in mid-2018, at the time of this writing the Microsoft polygonization code and trained models have yet to be made publicly available. Our aim was to develop a system to reproduce the capabilities of the Microsoft workflow on an arbitrary set of image data that could then enable the exploration of higher resolution data sets and data sets at different epochs. This project hopes to replicate the Microsoft workflow to enable building detection using other, higher pixel resolution and more recent open orthophotography datasets.\footnote{Our source code (Accessed 12/11/19):\\ \url{https://github.iu.edu/ResearchApplicationsDeepLearning/BuildingFootprints}}.
+In June of 2018 Microsoft released a geospatial dataset of all building footprints in the United States that were extracted from the Microsoft Bing Maps Aerial and Satellite Imagery\cite{Microsoft2019}. According to the provided documentation, Microsoft then used ResNet34 and RefineNet for per-pixel building identification with their own method of polygonizing the building footprints. Although these initial results were released in mid-2018, at the time of this writing the Microsoft polygonization code and trained models have yet to be made publicly available. Our aim was to develop a system to reproduce the capabilities of the Microsoft workflow on an arbitrary set of image data that could then enable the exploration of higher resolution data sets, data sets at different epochs, and could be trained to detect different features of interest in geospatial imagery. This project hopes to replicate the Microsoft workflow to enable building detection using other, higher pixel resolution and more recent open orthophotography datasets.\footnote{Our source code (Accessed 12/11/19):\\ \url{https://github.iu.edu/ResearchApplicationsDeepLearning/BuildingFootprints}}.
 
 \scott{The code referenced above will need to be cleaned up, quasi documented and boilerplated with a license and IU ownership and put in a public repo. The URL should be changed to that public repo when it's up}
 
-As an initial first step we took data obtained in 2016 of Hamilton County, Indiana \scott{pull in text from "data" section and add Jefferson's text here}
-With this data we undertook a segmentation using the CNN Segnet. There was a convenient implementation of Segnet in MATLAB. Without any fine tuning, the default Segnet model returned a mean accuracy of $0.6422$ and a mean Intersection over Union (IoU) of $0.3879$. While these results are not impressive, this was a CCN with only two encoding layers. This suggested that a deeper CNN with more trainging time would be suited to land cover image segmentation.
+As an initial first step we took data obtained in 2016 of Hamilton County, Indiana and prepared it to train a simple segmentation model.  \scott{pull in text from "data" section and add Jefferson's text here}
+As a first attempt we undertook a segmentation using the CNN Segnet. There was a convenient implementation of Segnet in MATLAB, which allowed us to quickly train the model and see what accuracy this model would be able to achieve. Without any fine tuning, the default Segnet model returned a mean accuracy of $0.6422$ and a mean Intersection over Union (IoU) of $0.3879$. While these results are not necessarily impressive, this was a CCN with only two encoding layers and we had done no real hyperparameter tuning. This suggested that a deeper CNN with more training data would should be capable of fairly accurate building detection.
 
 \subsection{Data}
- Open 3-channel RGB orthophotography captured in 2016 of a portion of Hamilton County, Indiana, was used with a corresponding grayscale image consisting of the building labels. The dataset encompassed a mostly urban setting. The grayscale image is comprised of pixel values 255 denoting a building and 0 denoting a non-building. The orthophotography has a pixel resolution of 1 ft. We cut out 256x256 GeoTIFF images from the orthophotograph and corresponding grayscale image to be used for training, validation, and testing. The option of augmentation is provided, and the number of augmented images created can be adjusted in our program. Augmentation consisted of randomly flipping the images and corresponding labels vertical and horizontally. The amount of data we used was 11,680 training images and labels, 3,960 validation images and labels, and 3,960 test images and labels.
+ The data used was captured in 2016 for a portion of Hamilton County, Indiana, and contained 3-channel RGB orthophotography \cite{ISDP} in conjunction we used a corresponding grayscale image consisting of a mask for the building labels. The dataset encompassed a mostly urban setting. The grayscale image is comprised of pixel values 255 denoting a building and 0 denoting a non-building. The orthophotography has a pixel resolution of 1 ft. We cut out 256x256 GeoTIFF images from the orthophotograph and corresponding grayscale image to be used for training, validation, and testing. The option of augmentation is provided, and the number of augmented images created can be adjusted in our program. Augmentation consisted of randomly flipping the images and corresponding labels vertical and horizontally. The amount of data we used was 11,680 training images and labels, 3,960 validation images and labels, and 3,960 test images and labels.
 
 \scott{Here we should pull apart the approach (using Matlab, then Unet, trying RefineNet, etc. from the actual tuning. Those numbers should go into the results section}
 \subsection{Model}
-The model used is a PyTorch UNet model created by GitHub user Joris van Vugt\cite{Joris2019}. This model is based on the model used in the paper, “U-Net: Convolutional Networks for Biomedical Image Segmentation.”\cite{ronneberger2015unet} The model’s different adjustable hyperparameters are explained on van Vugt’s GitHub page. He also gives a brief discussion of the model’s architecture. If the padding option is not used in the model, then our program will automatically pad and crop the images to achieve the same original dimensions. However, this is set up to be used only with 256x256 images.
+Following the initial attempts using Segnet in MATLAB, we moved to the UNet model, implemented in PyTorch \cite{Joris2019}. This model is based on the model used in the paper, “U-Net: Convolutional Networks for Biomedical Image Segmentation.”\cite{ronneberger2015unet} Our original motivation for using UNet was that it has performed particularly well in detecting irregular edges of anomalies in medical images. The ability to precisely cut out a region based on its classification was a desirable trait for building detection. The model’s different adjustable hyperparameters are explained on van Vugt’s GitHub page \cite{Joris2019}. He also gives a brief discussion of the model’s architecture. If the padding option is not used in the model, then the workflow we have designed will automatically pad and crop the images to achieve the same original dimensions. However, the default workflow is designed to work with 256x256 pixel images.
 
-\subsection{Hyperparameters}
- The model ran on a single Tesla P100 GPU on Indiana University’s Carbonate computer cluster. We used Adam\cite{kingma2014adam} for the optimizer where the learning rate started at 0.001 and after every 25 epochs the program would reduce it by a factor of 10. We used Weighted Cross Entropy\cite{Raul2018, Pytorch2019} to calculate the loss. The non-building class had a weight of 0.5 while the building class had a weight of 1, since there were significantly more non-building pixels than building pixels in the datasets. The model ran to a maximum epoch of 80 with a training batch size of 10 and testing batch size of 5. Our best scores were achieved with a model depth of 7, model Padding, no augmentation, transposed convolutions, batch normalization, and the number of filters in the first layer equaling $2^6$. Figure~\ref{fig:model} shows the structure of our model with these hyperparameters.
+\subsection{Hyperparameter Tuning}
+ The model was trained on a single Tesla P100 GPU on Indiana University’s Carbonate computer cluster. We used Adam\cite{kingma2014adam} for the optimizer where the learning rate started at 0.001 and after every 25 epochs the program would reduce it by a factor of 10. We used weighted cross entropy\cite{Raul2018, Pytorch2019} to calculate the loss. The non-building class had a weight of 0.5 while the building class had a weight of 1, since there were significantly more non-building pixels than building pixels in the datasets. The model ran to a maximum epoch of 80 with a training batch size of 10 and testing batch size of 5. Our best scores were achieved with a model depth of 7, model Padding, no augmentation, transposed convolutions, batch normalization, and the number of filters in the first layer equaling $2^6$. Figure~\ref{fig:model} shows the structure of our model with these hyperparameters.
 
-\begin{figure*}
-  \includegraphics[width=0.7\linewidth]{Images/UNetModel.png}
-  \caption{Structure of the UNet model that achieved the best results.}
-  \label{fig:model}
-\end{figure*}
-
-\subsection{Workflow}	
-To train and test the model, we stripped the GeoTIFF images of their metadata. The orthophotograph's RGB pixel values were set to be in the range 0 to 1. The grayscale images’ pixel values were changed to be either 1 to denote a building or 0 to denote a non-building. We fed the training dataset into the model and tested the model on the validation dataset after every epoch. Whenever the validation loss decreased, the program saved the model’s learned parameters at the current epoch. Afterwards, we loaded in the model’s parameters that achieved the lowest loss and ran it on the test dataset. We saved the predictions as gray-scale images and calculated their metrics. The metrics we calculated were recall, precision, the f1 score, and the intersection over union (IoU). Figure~\ref{fig:metrics} shows the equations for our metrics. Precision is the fraction of building pixels that were predicted correctly out of all the predicted building pixels, and recall is the fraction of building pixels that were predicted correctly out of all the building pixels in the label. The F1 score combines precision and recall to give us a better idea towards how well our model is performing, and the IoU shows how well the prediction overlaps its label. Only the labels that had buildings in them were compared to their corresponding predictions, and we used the average of our metrics over all the predictions that were compared. The IoU gave us the best idea on how well our model was doing.
+\subsection{Workflow}
+To train and test the model, we stripped the GeoTIFF images of their metadata. The orthophotograph's RGB pixel values were set to be in the range 0 to 1. The grayscale images’ pixel values were changed to be either 1 to denote a building or 0 to denote a non-building. We fed the training dataset into the model and tested the model on the validation dataset after every epoch. Whenever the validation loss decreased, the program saved the model’s learned parameters at the current epoch. Afterwards, we loaded in the model’s parameters that achieved the lowest loss and ran it on the test dataset. We saved the predictions as gray-scale images and calculated their metrics. The metrics we calculated were recall, precision, the f1 score, and the intersection over union (IoU). Figure~\ref{fig:metrics} shows the equations for our metrics. The precision is the fraction of building pixels that were predicted correctly out of all the predicted building pixels, and recall is the fraction of building pixels that were predicted correctly out of all the building pixels in the label. The F1 score combines precision and recall to give us a better idea towards how well our model is performing, and the IoU shows how well the prediction overlaps its label. Only the labels that had buildings in them were compared to their corresponding predictions, and we used the average of our metrics over all the predictions that were compared. The IoU gave us the best idea on how well our model was doing.
 
 \begin{figure}
   \includegraphics[width=1.0\linewidth]{Images/Metrics.png}
@@ -242,7 +241,7 @@ To train and test the model, we stripped the GeoTIFF images of their metadata. T
   \label{fig:metrics}
 \end{figure}
 
-Then, we reattached the metadata to the predictions using Phil Harvey’s ExifTool\cite{Harvey2019}. We did this by copying the metadata from the orthophotograph to the corresponding grayscale predictions. We used GDAL to polygonize the new GeoTIFF images and saved them as GeoJSONs, while removing any files that did not have polygons in them as they would have been saved in an incorrect format. We fed the remaining GeoJSONs into an ogr2ogr program where their lines were smoothed using a distance tolerance of 2. Afterwards, we converted the GeoJSONs back into GeoTIFFs and stripped the metadata off them to calculate their metrics again to see if there was an improvement in scores.
+After obtaining the predictions from teh best model parameters, we reattached the metadata to the predictions using ExifTool \cite{Harvey2019}. We did this by copying the metadata from the orthophotograph to the corresponding grayscale predictions. We used GDAL to polygonize the new GeoTIFF images and saved them as GeoJSONs, while removing any files that did not have polygons in them as they would have been saved in an incorrect format. We fed the remaining GeoJSONs into an ogr2ogr program where their lines were smoothed using a distance tolerance of 2. Afterwards, we converted the GeoJSONs back into GeoTIFFs and stripped the metadata off them to calculate their metrics again to see if there was an improvement in scores.
 
 \section{Results}
  Table~\ref{tab:depths} reveals the change in performance of the model with different depths. There is a small increase in the F1 score, precision, and IoU as the model increased in depth. At a depth of 7 the model achieved its best scores on epoch 30, where each epoch ran for approximately 14 minutes. Table 2 illustrates the final metrics of our model with a depth of 7 achieved before and after polygonization. There is a slight decrease in all the metrics except for precision. Figure~\ref{fig:multi} gives an example of what smoothing the predictions did.
@@ -287,7 +286,7 @@ Then, we reattached the metadata to the predictions using Phil Harvey’s ExifTo
     \label{fig:4}
   \end{subfigure}
   \caption{The before and after of smoothing the predictions.}
-  \label{fig:multi} 
+  \label{fig:multi}
 \end{figure*}
 
 Table~\ref{tab:obfvsmbf} also compares our results with Microsoft’s. Microsoft performed better than us in all the metrics for a few reasons. First, their training dataset consisted of 5 million training images\cite{Microsoft2019}, significantly larger than ours. It covered mostly diverse residential areas with samples of mountains, beaches, forests, etc\cite{Microsoft2019}. Also, their evaluation set consisted of 15 thousand images\cite{Microsoft2019}. They used ResNet34 and RefineNet\cite{Microsoft2019}, while we used UNet. Second, their polygonization method is much more sophisticated than ours and greatly improved their precision score, while ours only increased it slightly.
